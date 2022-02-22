@@ -11,6 +11,11 @@ Parameters:
       - container-devsecops-wksp
     Description: Prefix of Resources created for this workshop.
 
+  BucketName:
+    Type: String
+    Default: sa-security-specialist-workshops-us-east-2
+    Description: Source bucket for workshop CloudFormation yaml's
+
 Resources:
 
   ### Cloud9 IDE
@@ -77,7 +82,7 @@ Resources:
           NO_ARTIFACTS
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/standard:2.0
+        Image: aws/codebuild/standard:4.0-21.04.23
         PrivilegedMode: True
         Type: LINUX_CONTAINER
         ImagePullCredentialsType: CODEBUILD
@@ -90,7 +95,7 @@ Resources:
       ServiceRole: !GetAtt AnchoreCodeBuildRole.Arn
       Source: 
         Type: S3
-        Location: sa-security-specialist-workshops-us-east-2/devsecops/containers/anchore-build.zip
+        Location: !Join [ '/', [ !Ref BucketName, 'devsecops/containers/anchore-build.zip'  ] ]
         BuildSpec: |
           version: 0.2
           phases:
@@ -100,6 +105,7 @@ Resources:
                 python: 3.7
             pre_build: 
               commands:
+                - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
                 - apt-get update && apt-get install -y python-dev
                 - curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py  
                 - python get-pip.py
@@ -629,7 +635,7 @@ Resources:
                               'ProductArn': product_arn,
                               'ProductFields': {
                                 'ProviderName': 'Anchore',
-                                'ProviderVersion': 'v0.3.4',
+                                'ProviderVersion': 'v0.8.2',
                               },
                               'GeneratorId': uuid,
                               'AwsAccountId': account_id,

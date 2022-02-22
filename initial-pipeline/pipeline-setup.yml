@@ -21,7 +21,12 @@ Parameters:
       - Critical
     Description: Threshold to fail the pipeline if app image has vulnerabilities
 
-Metadata: 
+  BucketName:
+    Type: String
+    Default: sa-security-specialist-workshops-us-east-2
+    Description: Source bucket for workshop CloudFormation yaml's
+
+Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups: 
       - 
@@ -69,6 +74,7 @@ Resources:
     DependsOn: 
       - AppRepository
       - ConfigRepository
+      - LambdaRepositoryInitialCommit
     Type: Custom::CustomResource
     Properties:
       ServiceToken: !GetAtt 'LambdaRepositoryInitialCommit.Arn'
@@ -119,9 +125,9 @@ Resources:
       Description: "Creates initial commits to respository."
       Role: !GetAtt 'LambdaRepositoryInitialCommitRole.Arn'
       Code: 
-        S3Bucket: 'sa-security-specialist-workshops-us-east-2'
+        S3Bucket: !Ref BucketName
         S3Key: 'devsecops/containers/initial-commit.zip'
-      Runtime: "python2.7"
+      Runtime: "python3.9"
       Timeout: "35"
   
   ### ECR Repository
@@ -317,7 +323,7 @@ Resources:
                 name=pipeline,
               )
             
-      Runtime: "python2.7"
+      Runtime: "python3.9"
       Timeout: "35"
       MemorySize: 128
 
@@ -434,7 +440,7 @@ Resources:
             ssm.delete_parameter(
               Name='codebuild-dockerfile-results'
             )
-      Runtime: "python2.7"
+      Runtime: "python3.9"
       Timeout: "35"
       MemorySize: 128
 
@@ -540,7 +546,7 @@ Resources:
               afterCommitId = destination_commit['Parameter']['Value'],
               content = content
             )
-      Runtime: "python2.7"
+      Runtime: "python3.9"
       Timeout: "35"
       MemorySize: 128
 
@@ -646,7 +652,7 @@ Resources:
               afterCommitId = destination_commit['Parameter']['Value'],
               content = content
             )
-      Runtime: "python2.7"
+      Runtime: "python3.9"
       Timeout: "35"
       MemorySize: 128
 
@@ -767,7 +773,7 @@ Resources:
                   'destinationCommit'
               ]
             )
-      Runtime: "python2.7"
+      Runtime: "python3.9"
       Timeout: "35"
       MemorySize: 128
 
@@ -1062,7 +1068,8 @@ Resources:
         Type: CODEPIPELINE
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/docker:18.09.0
+        Image: aws/codebuild/standard:5.0
+        PrivilegedMode: true
         Type: LINUX_CONTAINER
         EnvironmentVariables:
           - Name: FAIL_WHEN
